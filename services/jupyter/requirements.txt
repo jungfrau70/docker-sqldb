@@ -1,0 +1,44 @@
+# These packages are installed for both python2 and python3
+
+# Extensions for jupyter notebook
+widgetsnbextension
+ipywidgets
+
+# tensorflow related packages
+tensor2tensor
+# tensorflow-gpu
+
+# Common data science packages
+h5py
+sklearn
+pandas
+keras
+matplotlib
+implicit
+
+# Google Cloud related packages
+google-cloud
+pandas-gbq
+google-api-python-client
+
+# NLP packages
+transformers
+gensim
+beautifulsoup4
+lxml
+requests
+selenium
+JPype1
+konlpy
+soynlp
+wordcloud
+
+# Postgres
+psycopg2-binary
+ipython-sql
+
+# Others
+minio
+pyngrok
+streamlit
+Flask

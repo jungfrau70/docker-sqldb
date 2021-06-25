@@ -1,0 +1,9 @@
+{
+  "keys": {
+    "command": {
+      "bind": {
+        "m,m": "jupyter-notebook:merge-cell-with-previous-cell"
+      }
+    }
+  }
+}

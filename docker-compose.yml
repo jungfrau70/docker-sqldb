@@ -1,0 +1,136 @@
+version: '3.2'
+
+services:
+
+  elasticsearch:
+    build:
+      context: services/elasticsearch/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - type: bind
+        source: ./services/elasticsearch/config/elasticsearch.yml
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+        read_only: true
+      - type: volume
+        source: elasticsearch
+        target: /usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
+      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+      discovery.type: single-node
+    networks:
+      - elk
+
+  mongodb:
+    container_name: "mongodb"
+    image: mongo:3.6.2
+    restart: always
+    ports:
+      - 27017:27017
+    env_file:
+      - ./config/mongodb.env
+    volumes:
+      - mongodb_data:/data/db
+
+  mysql:
+    container_name: "mysql"
+    image: mysql:5.7
+    restart: always
+    env_file:
+      - ./config/mysql.env
+    ports:
+      # <Port exposed> : < MySQL Port running inside container>
+      - '3306:3306'
+    expose:
+      # Opens port 3306 on the container
+      - '3306'
+      # Where our data will be persisted
+    volumes:
+      - ./services/mysql/init:/docker-entrypoint-initdb.d
+      - mysql-db:/var/lib/mysql
+
+  # Computation
+  jupyterlab:
+    container_name: "jupyterlab"
+    restart: "always"
+    build: services/jupyter
+    env_file:
+      - ./config/jupyter.env
+#      - ./config/minio.env
+#      - ./config/shared_database.env
+    volumes:
+      - ./shared/notebooks/:/home/jovyan/notebooks
+#      - ./shared/dags/:/home/jovyan/work/dags
+#      - ./services/apistar/api/:/home/jovyan/work/api
+    ports:
+      - 8888:8888
+    # entrypoint: sh -c 'start-notebook.sh --NotebookApp.token=$$JUPYTER_PASSWORD'
+    entrypoint: sh -c 'jupyter lab --notebook-dir=/home/jovyan --ip=0.0.0.0 --no-browser --allow-root --port=8888 --NotebookApp.allow_origin='*' --NotebookApp.base_url=${NB_PREFIX} --NotebookApp.token=$$JUPYTER_PASSWORD'
+
+#  logstash:
+#      container_name: "logstash"
+#    build:
+#      context: logstash/
+#      args:
+#        ELK_VERSION: $ELK_VERSION
+#    volumes:
+#      - type: bind
+#        source: ./services/logstash/config/logstash.yml
+#        target: /usr/share/logstash/config/logstash.yml
+#        read_only: true
+#      - type: bind
+#        source: ./logstash/pipeline
+#        target: /usr/share/logstash/pipeline
+#        read_only: true
+#    ports:
+#      - "5044:5044"
+#      - "5000:5000/tcp"
+#      - "5000:5000/udp"
+#      - "9600:9600"
+#    environment:
+#      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+#    networks:
+#      - elk
+#    depends_on:
+#      - elasticsearch
+
+  kibana:
+    container_name: "kibana"
+    build:
+      context: services/kibana/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - type: bind
+        source: ./services/kibana/config/kibana.yml
+        target: /usr/share/kibana/config/kibana.yml
+        read_only: true
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  # DB Admin Console
+  adminer:
+    container_name: "adminer"
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+networks:
+  elk:
+    driver: bridge
+
+# Volumes to persist data
+volumes:
+  elasticsearch:
+  mongodb_data:
+  mysql-db:
