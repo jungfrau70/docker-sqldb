@@ -2,7 +2,76 @@ version: '3.2'
 
 services:
 
+  # Computation
+  jupyterlab:
+    container_name: "jupyterlab"
+    restart: "always"
+    build: services/jupyter
+    env_file:
+      - ./config/jupyter.env
+#      - ./config/minio.env
+#      - ./config/shared_database.env
+    volumes:
+      - ./shared/notebooks/:/home/jovyan/notebooks
+    ports:
+      - 8888:8888
+    entrypoint: sh -c 'jupyter lab --notebook-dir=/home/jovyan --ip=0.0.0.0 --no-browser --allow-root --port=8888 --NotebookApp.allow_origin='*' --NotebookApp.base_url=${NB_PREFIX} --NotebookApp.token=$$JUPYTER_PASSWORD'
+
+#  logstash:
+#      container_name: "logstash"
+#    build:
+#      context: logstash/
+#      args:
+#        ELK_VERSION: $ELK_VERSION
+#    volumes:
+#      - type: bind
+#        source: ./services/logstash/config/logstash.yml
+#        target: /usr/share/logstash/config/logstash.yml
+#        read_only: true
+#      - type: bind
+#        source: ./logstash/pipeline
+#        target: /usr/share/logstash/pipeline
+#        read_only: true
+#    ports:
+#      - "5044:5044"
+#      - "5000:5000/tcp"
+#      - "5000:5000/udp"
+#      - "9600:9600"
+#    environment:
+#      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+#    networks:
+#      - elk
+#    depends_on:
+#      - elasticsearch
+
+  # DB Admin Console
+  adminer:
+    container_name: "adminer"
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  kibana:
+    container_name: "kibana"
+    build:
+      context: services/kibana/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - type: bind
+        source: ./services/kibana/config/kibana.yml
+        target: /usr/share/kibana/config/kibana.yml
+        read_only: true
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
   elasticsearch:
+    container_name: "elasticsearch"
     build:
       context: services/elasticsearch/
       args:
@@ -54,76 +123,46 @@ services:
       - ./services/mysql/init:/docker-entrypoint-initdb.d
       - mysql-db:/var/lib/mysql
 
-  # Computation
-  jupyterlab:
-    container_name: "jupyterlab"
-    restart: "always"
-    build: services/jupyter
-    env_file:
-      - ./config/jupyter.env
-#      - ./config/minio.env
+#  # Misc Storage
+#  postgres:
+#    container_name: "postgres"
+#    restart: "always"
+#    image: postgres
+#    env_file:
+#      - ./config/postgres.env
+#      # - ./config/superset_database.env
+#      # - ./config/airflow_database.env
 #      - ./config/shared_database.env
-    volumes:
-      - ./shared/notebooks/:/home/jovyan/notebooks
-#      - ./shared/dags/:/home/jovyan/work/dags
-#      - ./services/apistar/api/:/home/jovyan/work/api
-    ports:
-      - 8888:8888
-    # entrypoint: sh -c 'start-notebook.sh --NotebookApp.token=$$JUPYTER_PASSWORD'
-    entrypoint: sh -c 'jupyter lab --notebook-dir=/home/jovyan --ip=0.0.0.0 --no-browser --allow-root --port=8888 --NotebookApp.allow_origin='*' --NotebookApp.base_url=${NB_PREFIX} --NotebookApp.token=$$JUPYTER_PASSWORD'
-
-#  logstash:
-#      container_name: "logstash"
-#    build:
-#      context: logstash/
-#      args:
-#        ELK_VERSION: $ELK_VERSION
 #    volumes:
-#      - type: bind
-#        source: ./services/logstash/config/logstash.yml
-#        target: /usr/share/logstash/config/logstash.yml
-#        read_only: true
-#      - type: bind
-#        source: ./logstash/pipeline
-#        target: /usr/share/logstash/pipeline
-#        read_only: true
+#      - postgres_volume:/var/lib/postgresql/data/
+#      - ./services/postgres/:/docker-entrypoint-initdb.d/
 #    ports:
-#      - "5044:5044"
-#      - "5000:5000/tcp"
-#      - "5000:5000/udp"
-#      - "9600:9600"
-#    environment:
-#      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
-#    networks:
-#      - elk
-#    depends_on:
-#      - elasticsearch
+#      - 5432:5432
 
-  kibana:
-    container_name: "kibana"
-    build:
-      context: services/kibana/
-      args:
-        ELK_VERSION: $ELK_VERSION
-    volumes:
-      - type: bind
-        source: ./services/kibana/config/kibana.yml
-        target: /usr/share/kibana/config/kibana.yml
-        read_only: true
-    ports:
-      - "5601:5601"
-    networks:
-      - elk
-    depends_on:
-      - elasticsearch
+#  # Model Storage
+#  minio:
+#    container_name: "minio"
+#    restart: "always"
+#    image: minio/minio
+#    env_file:
+#      - ./config/minio.env
+#    volumes:
+#      - minio_volume:/data
+#    ports:
+#      - 9000:9000
+#    command: server /data
 
-  # DB Admin Console
-  adminer:
-    container_name: "adminer"
-    image: adminer
-    restart: always
-    ports:
-      - 8080:8080
+#  # Admin Overview
+#  portainer:
+#    container_name: "portainer"
+#    restart: "always"
+#    image: portainer/portainer
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - portainer_volume:/data
+#    ports:
+#      - 9090:9000
+#    command: -H unix:///var/run/docker.sock
 
 networks:
   elk:
@@ -132,5 +171,8 @@ networks:
 # Volumes to persist data
 volumes:
   elasticsearch:
+#  minio_volume:
   mongodb_data:
   mysql-db:
+#  postgres_volume:
+#  portainer_volume:
