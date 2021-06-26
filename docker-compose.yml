@@ -14,86 +14,8 @@ services:
     volumes:
       - ./shared/notebooks/:/home/jovyan/notebooks
     ports:
-      - 8888:8888
+      - 9999:8888
     entrypoint: sh -c 'jupyter lab --notebook-dir=/home/jovyan --ip=0.0.0.0 --no-browser --allow-root --port=8888 --NotebookApp.allow_origin='*' --NotebookApp.base_url=${NB_PREFIX} --NotebookApp.token=$$JUPYTER_PASSWORD'
-
-#  logstash:
-#      container_name: "logstash"
-#    build:
-#      context: logstash/
-#      args:
-#        ELK_VERSION: $ELK_VERSION
-#    volumes:
-#      - type: bind
-#        source: ./services/logstash/config/logstash.yml
-#        target: /usr/share/logstash/config/logstash.yml
-#        read_only: true
-#      - type: bind
-#        source: ./logstash/pipeline
-#        target: /usr/share/logstash/pipeline
-#        read_only: true
-#    ports:
-#      - "5044:5044"
-#      - "5000:5000/tcp"
-#      - "5000:5000/udp"
-#      - "9600:9600"
-#    environment:
-#      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
-#    networks:
-#      - elk
-#    depends_on:
-#      - elasticsearch
-
-  # DB Admin Console
-  adminer:
-    container_name: "adminer"
-    image: adminer
-    restart: always
-    ports:
-      - 8080:8080
-
-  kibana:
-    container_name: "kibana"
-    build:
-      context: services/kibana/
-      args:
-        ELK_VERSION: $ELK_VERSION
-    volumes:
-      - type: bind
-        source: ./services/kibana/config/kibana.yml
-        target: /usr/share/kibana/config/kibana.yml
-        read_only: true
-    ports:
-      - "5601:5601"
-    networks:
-      - elk
-    depends_on:
-      - elasticsearch
-
-  elasticsearch:
-    container_name: "elasticsearch"
-    build:
-      context: services/elasticsearch/
-      args:
-        ELK_VERSION: $ELK_VERSION
-    volumes:
-      - type: bind
-        source: ./services/elasticsearch/config/elasticsearch.yml
-        target: /usr/share/elasticsearch/config/elasticsearch.yml
-        read_only: true
-      - type: volume
-        source: elasticsearch
-        target: /usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    environment:
-      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
-      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
-      discovery.type: single-node
-    networks:
-      - elk
 
   mongodb:
     container_name: "mongodb"
@@ -170,7 +92,6 @@ networks:
 
 # Volumes to persist data
 volumes:
-  elasticsearch:
 #  minio_volume:
   mongodb_data:
   mysql-db:
