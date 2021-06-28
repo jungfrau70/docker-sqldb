@@ -26,7 +26,20 @@ services:
     env_file:
       - ./config/mongodb.env
     volumes:
-      - mongodb_data:/data/db
+      - ~/data-volume/mongodb_data:/data-volume/db
+
+  oracle11g:
+    container_name: oracle11g
+    image: oracleinanutshell/oracle-xe-11g:latest
+    restart: always
+    env_file:
+      - ./config/oracle.env
+    ports:
+      - 1521:1521
+      - 5500:5500
+    volumes:
+      - ./services/oracle/init:/docker-entrypoint-initdb.d
+      - ~/data-volume/oradata:/opt/oracle/oradata # jaspeen/oracle-xe-11g
 
   mysql:
     container_name: "mysql"
@@ -40,10 +53,10 @@ services:
     expose:
       # Opens port 3306 on the container
       - '3306'
-      # Where our data will be persisted
+      # Where our data-volume will be persisted
     volumes:
       - ./services/mysql/init:/docker-entrypoint-initdb.d
-      - mysql-db:/var/lib/mysql
+      - ~/data-volume/mysql-db:/var/lib/mysql
 
 #  # Misc Storage
 #  postgres:
@@ -56,7 +69,7 @@ services:
 #      # - ./config/airflow_database.env
 #      - ./config/shared_database.env
 #    volumes:
-#      - postgres_volume:/var/lib/postgresql/data/
+#      - ~/data-volume/postgres_data:/var/lib/postgresql/data-volume/
 #      - ./services/postgres/:/docker-entrypoint-initdb.d/
 #    ports:
 #      - 5432:5432
@@ -69,10 +82,10 @@ services:
 #    env_file:
 #      - ./config/minio.env
 #    volumes:
-#      - minio_volume:/data
+#      - minio_volume:/data-volume
 #    ports:
 #      - 9000:9000
-#    command: server /data
+#    command: server /data-volume
 
 #  # Admin Overview
 #  portainer:
@@ -81,7 +94,7 @@ services:
 #    image: portainer/portainer
 #    volumes:
 #      - /var/run/docker.sock:/var/run/docker.sock
-#      - portainer_volume:/data
+#      - portainer_volume:/data-volume
 #    ports:
 #      - 9090:9000
 #    command: -H unix:///var/run/docker.sock
@@ -90,10 +103,7 @@ networks:
   elk:
     driver: bridge
 
-# Volumes to persist data
-volumes:
+# Volumes to persist data-volume
+#volumes:
 #  minio_volume:
-  mongodb_data:
-  mysql-db:
-#  postgres_volume:
 #  portainer_volume:
