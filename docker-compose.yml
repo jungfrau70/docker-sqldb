@@ -1,45 +1,45 @@
 version: '3.2'
 
 services:
-
-  # Computation
-  jupyterlab:
-    container_name: "jupyterlab"
-    restart: "always"
-    build: services/jupyter
-    env_file:
-      - ./config/jupyter.env
-#      - ./config/minio.env
-#      - ./config/shared_database.env
-    volumes:
-      - ./shared/notebooks/:/home/jovyan/notebooks
-    ports:
-      - 9999:8888
-    entrypoint: sh -c 'jupyter lab --notebook-dir=/home/jovyan --ip=0.0.0.0 --no-browser --allow-root --port=8888 --NotebookApp.allow_origin='*' --NotebookApp.base_url=${NB_PREFIX} --NotebookApp.token=$$JUPYTER_PASSWORD'
-
-  mongodb:
-    container_name: "mongodb"
-    image: mongo:3.6.2
-    restart: always
-    ports:
-      - 27017:27017
-    env_file:
-      - ./config/mongodb.env
-    volumes:
-      - ~/data-volume/mongodb_data:/data-volume/db
-
-  oracle11g:
-    container_name: oracle11g
-    image: oracleinanutshell/oracle-xe-11g:latest
-    restart: always
-    env_file:
-      - ./config/oracle.env
-    ports:
-      - 1521:1521
-      - 5500:5500
-    volumes:
-      - ./services/oracle/init:/docker-entrypoint-initdb.d
-      - ~/data-volume/oradata:/opt/oracle/oradata # jaspeen/oracle-xe-11g
+#
+#  # Computation
+#  jupyterlab:
+#    container_name: "jupyterlab"
+#    restart: "always"
+#    build: services/jupyter
+#    env_file:
+#      - ./config/jupyter.env
+##      - ./config/minio.env
+##      - ./config/shared_database.env
+#    volumes:
+#      - ./shared/notebooks/:/home/jovyan/notebooks
+#    ports:
+#      - 9999:8888
+#    entrypoint: sh -c 'jupyter lab --notebook-dir=/home/jovyan --ip=0.0.0.0 --no-browser --allow-root --port=8888 --NotebookApp.allow_origin='*' --NotebookApp.base_url=${NB_PREFIX} --NotebookApp.token=$$JUPYTER_PASSWORD'
+#
+#  mongodb:
+#    container_name: "mongodb"
+#    image: mongo:3.6.2
+#    restart: always
+#    ports:
+#      - 27017:27017
+#    env_file:
+#      - ./config/mongodb.env
+#    volumes:
+#      - ~/data-volume/mongodb_data:/data-volume/db
+#
+#  oracle11g:
+#    container_name: oracle11g
+#    image: oracleinanutshell/oracle-xe-11g:latest
+#    restart: always
+#    env_file:
+#      - ./config/oracle.env
+#    ports:
+#      - 1521:1521
+#      - 5500:5500
+#    volumes:
+#      - ./services/oracle/init:/docker-entrypoint-initdb.d
+#      - ~/data-volume/oradata:/opt/oracle/oradata # jaspeen/oracle-xe-11g
 
   mysql:
     container_name: "mysql"
@@ -56,7 +56,7 @@ services:
       # Where our data-volume will be persisted
     volumes:
       - ./services/mysql/init:/docker-entrypoint-initdb.d
-      - ~/data-volume/mysql-db:/var/lib/mysql
+      - ./data-volume/mysql-db:/var/lib/mysql
 
 #  # Misc Storage
 #  postgres:
@@ -99,9 +99,9 @@ services:
 #      - 9090:9000
 #    command: -H unix:///var/run/docker.sock
 
-networks:
-  elk:
-    driver: bridge
+#networks:
+#  elk:
+#    driver: bridge
 
 # Volumes to persist data-volume
 #volumes:
